@@ -18,6 +18,11 @@ module JSONAPI
 
       def self.inherited(klass)
         super
+        klass.type_val = type_val
+        klass.type_block = type_block
+        klass.id_block = id_block
+        klass.meta_val = meta_val
+        klass.meta_block = meta_block
         klass.attribute_blocks = attribute_blocks.dup
         klass.relationship_blocks = relationship_blocks.dup
         klass.link_blocks = link_blocks.dup
