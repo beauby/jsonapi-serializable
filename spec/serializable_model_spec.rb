@@ -25,7 +25,8 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
     @posts = [
       Post.new(id: 1, title: 'Post 1', date: 'yesterday', author: @users[1]),
       Post.new(id: 2, title: 'Post 2', date: 'today', author: @users[0]),
-      Post.new(id: 3, title: 'Post 3', date: 'tomorrow', author: @users[1])
+      Post.new(id: 3, title: 'Post 3', date: 'tomorrow', author: @users[1]),
+      Post.new(id: 4, title: 'Post 4', date: 'tomorrow')
     ]
     @users[1].posts = [@posts[0], @posts[2]]
     @users[0].posts = [@posts[1]]
@@ -101,6 +102,26 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
           links: {
             self: 'http://api.example.com/posts/1/relationships/author'
           }
+        }
+      }
+    }
+
+    expect(actual).to eq(expected)
+  end
+
+  it 'handles nil has_one relationships' do
+    user_klass = Class.new(JSONAPI::Serializable::Model[User])
+    post_klass = Class.new(JSONAPI::Serializable::Model[Post]) do
+      has_one :author, user_klass
+    end
+    resource = post_klass.new(model: @posts[3])
+    actual = resource.as_jsonapi
+    expected = {
+      type: 'Post',
+      id: '4',
+      relationships: {
+        author: {
+          data: nil
         }
       }
     }

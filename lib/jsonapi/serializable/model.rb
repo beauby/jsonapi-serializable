@@ -46,8 +46,12 @@ module JSONAPI
         relationship(rel, &rel_block)
       end
 
+      def nil?
+        @model.nil?
+      end
+
       def as_jsonapi(params = {})
-        return nil if @model.nil?
+        return nil if nil?
         super(params)
       end
     end
