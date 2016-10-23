@@ -22,7 +22,9 @@ module JSONAPI
         rel_block = proc do
           if resource_klass
             data do
-              resource_klass.new(model: @model.public_send(rel))
+              @model.public_send(rel).map do |related|
+                resource_klass.new(model: related)
+              end
             end
           end
           instance_eval(&block) unless block.nil?
@@ -34,7 +36,8 @@ module JSONAPI
         rel_block = proc do
           if resource_klass
             data do
-              resource_klass.new(model: @model.public_send(rel))
+              related = @model.public_send(rel)
+              resource_klass.new(model: related)
             end
           end
           instance_eval(&block) unless block.nil?
