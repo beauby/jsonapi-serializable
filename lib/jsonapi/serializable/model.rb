@@ -7,6 +7,8 @@ module JSONAPI
         attr_accessor :api_version_val
       end
 
+      id { @model.public_send(:id).to_s }
+
       def self.api_version(value)
         self.api_version_val = value
       end
@@ -14,11 +16,6 @@ module JSONAPI
       def self.type(value = nil)
         value ||= name
         super(value)
-      end
-
-      def self.id(&block)
-        block ||= proc { @model.public_send(:id).to_s }
-        super(&block)
       end
 
       def self.attribute(attr, &block)

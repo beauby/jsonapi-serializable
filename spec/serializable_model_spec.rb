@@ -35,7 +35,6 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
   it 'handles type and id' do
     user_klass = Class.new(JSONAPI::Serializable::Model) do
       type 'users'
-      id
     end
     resource = user_klass.new(model: @users[0])
     actual = resource.as_jsonapi
@@ -50,7 +49,6 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
   it 'handles attributes' do
     user_klass = Class.new(JSONAPI::Serializable::Model) do
       type 'users'
-      id
       attribute :name
       attribute :address
     end
@@ -71,11 +69,9 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
   it 'handles included has_one relationships' do
     user_klass = Class.new(JSONAPI::Serializable::Model) do
       type 'users'
-      id
     end
     post_klass = Class.new(JSONAPI::Serializable::Model) do
       type 'posts'
-      id
       has_one :author, user_klass
     end
     resource = post_klass.new(model: @posts[0])
@@ -96,11 +92,9 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
   it 'handles non-included has_one relationships' do
     user_klass = Class.new(JSONAPI::Serializable::Model) do
       type 'users'
-      id
     end
     post_klass = Class.new(JSONAPI::Serializable::Model) do
       type 'posts'
-      id
       has_one :author, user_klass do
         link(:self) do
           "http://api.example.com/posts/#{@model.id}/relationships/author"
@@ -127,11 +121,9 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
   it 'handles nil has_one relationships' do
     user_klass = Class.new(JSONAPI::Serializable::Model) do
       type 'users'
-      id
     end
     post_klass = Class.new(JSONAPI::Serializable::Model) do
       type 'posts'
-      id
       has_one :author, user_klass
     end
     resource = post_klass.new(model: @posts[3])
@@ -152,11 +144,9 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
   it 'falls back to linkage data for non-included has_one relationships' do
     user_klass = Class.new(JSONAPI::Serializable::Model) do
       type 'users'
-      id
     end
     post_klass = Class.new(JSONAPI::Serializable::Model) do
       type 'posts'
-      id
       has_one :author, user_klass
     end
     resource = post_klass.new(model: @posts[0])
