@@ -32,12 +32,15 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
     @users[0].posts = [@posts[1]]
   end
 
-  it 'infers type and id' do
-    user_klass = Class.new(JSONAPI::Serializable::Model[User])
+  it 'handles type and id' do
+    user_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'users'
+      id
+    end
     resource = user_klass.new(model: @users[0])
     actual = resource.as_jsonapi
     expected = {
-      type: 'User',
+      type: 'users',
       id: '1'
     }
 
@@ -45,14 +48,16 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
   end
 
   it 'handles attributes' do
-    user_klass = Class.new(JSONAPI::Serializable::Model[User]) do
+    user_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'users'
+      id
       attribute :name
       attribute :address
     end
     resource = user_klass.new(model: @users[0])
     actual = resource.as_jsonapi
     expected = {
-      type: 'User',
+      type: 'users',
       id: '1',
       attributes: {
         name: 'User 1',
@@ -64,18 +69,23 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
   end
 
   it 'handles included has_one relationships' do
-    user_klass = Class.new(JSONAPI::Serializable::Model[User])
-    post_klass = Class.new(JSONAPI::Serializable::Model[Post]) do
+    user_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'users'
+      id
+    end
+    post_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'posts'
+      id
       has_one :author, user_klass
     end
     resource = post_klass.new(model: @posts[0])
     actual = resource.as_jsonapi(include: [:author])
     expected = {
-      type: 'Post',
+      type: 'posts',
       id: '1',
       relationships: {
         author: {
-          data: { type: 'User', id: '2' }
+          data: { type: 'users', id: '2' }
         }
       }
     }
@@ -84,8 +94,13 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
   end
 
   it 'handles non-included has_one relationships' do
-    user_klass = Class.new(JSONAPI::Serializable::Model[User])
-    post_klass = Class.new(JSONAPI::Serializable::Model[Post]) do
+    user_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'users'
+      id
+    end
+    post_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'posts'
+      id
       has_one :author, user_klass do
         link(:self) do
           "http://api.example.com/posts/#{@model.id}/relationships/author"
@@ -95,7 +110,7 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
     resource = post_klass.new(model: @posts[0])
     actual = resource.as_jsonapi
     expected = {
-      type: 'Post',
+      type: 'posts',
       id: '1',
       relationships: {
         author: {
@@ -110,14 +125,19 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
   end
 
   it 'handles nil has_one relationships' do
-    user_klass = Class.new(JSONAPI::Serializable::Model[User])
-    post_klass = Class.new(JSONAPI::Serializable::Model[Post]) do
+    user_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'users'
+      id
+    end
+    post_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'posts'
+      id
       has_one :author, user_klass
     end
     resource = post_klass.new(model: @posts[3])
     actual = resource.as_jsonapi
     expected = {
-      type: 'Post',
+      type: 'posts',
       id: '4',
       relationships: {
         author: {
@@ -130,18 +150,23 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
   end
 
   it 'falls back to linkage data for non-included has_one relationships' do
-    user_klass = Class.new(JSONAPI::Serializable::Model[User])
-    post_klass = Class.new(JSONAPI::Serializable::Model[Post]) do
+    user_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'users'
+      id
+    end
+    post_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'posts'
+      id
       has_one :author, user_klass
     end
     resource = post_klass.new(model: @posts[0])
     actual = resource.as_jsonapi
     expected = {
-      type: 'Post',
+      type: 'posts',
       id: '1',
       relationships: {
         author: {
-          data: { type: 'User', id: '2' }
+          data: { type: 'users', id: '2' }
         }
       }
     }

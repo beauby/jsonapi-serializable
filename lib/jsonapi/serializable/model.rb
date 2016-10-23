@@ -3,13 +3,9 @@ require 'jsonapi/serializable/resource'
 module JSONAPI
   module Serializable
     class Model < Resource
-      def self.[](model_klass)
-        # TODO(beauby): Memoize the specified base classes. Ensure they are
-        #   being subclassed rather than directly modified.
-        Class.new(self) do
-          type model_klass.to_s
-          id
-        end
+      def self.type(value = nil)
+        value ||= name
+        super(value)
       end
 
       def self.id(&block)
