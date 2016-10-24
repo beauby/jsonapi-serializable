@@ -2,6 +2,11 @@
 Ruby gem for building and rendering [JSON API](http://jsonapi.org) resources.
 Built upon the [jsonapi-renderer](https://github.com/beauby/jsonapi) gem.
 
+## Status
+
+[![Gem Version](https://badge.fury.io/rb/jsonapi-serializable.svg)](https://badge.fury.io/rb/jsonapi-serializable)
+[![Build Status](https://secure.travis-ci.org/beauby/jsonapi-serializable.svg?branch=master)](http://travis-ci.org/beauby/jsonapi-serializable?branch=master)
+
 ## Installation
 ```ruby
 # In Gemfile
