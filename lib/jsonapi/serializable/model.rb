@@ -24,7 +24,8 @@ module JSONAPI
         version = self.class.api_version_val
 
         klass_name = [namespace, version, "Serializable#{model_klass_name}"]
-                     .reject(:empty?)
+                     .reject(&:nil?)
+                     .reject(&:empty?)
                      .join('::'.freeze)
 
         Object.const_get(klass_name)
