@@ -1,4 +1,5 @@
 require 'jsonapi/serializable'
+require 'jsonapi/renderer'
 
 class Model
   def initialize(params)
@@ -164,144 +165,78 @@ describe JSONAPI::Serializable::Model, '#as_jsonapi' do
     expect(actual).to eq(expected)
   end
 
-  # it 'does not include data when relationship is not included' do
-  #   user_klass = Class.new(JSONAPI::Serializable::Resource) do
-  #     type 'users'
-  #     id { @user.id.to_s }
-  #     relationship(:posts) do
-  #       link(:self) { "http://api.example.com/users/#{@user.id}/relationships/posts" }
-  #       link(:related) { "http://api.example.com/users/#{@user.id}/posts" }
-  #       meta(rel_meta: 'some meta')
-  #       data do
-  #         @user.posts.map do |p|
-  #           post_klass.new(post: p, UrlHelper: @url_helper)
-  #         end
-  #       end
-  #     end
-  #   end
-  #   resource = user_klass.new(user: @users[0], url_helper: UrlHelper)
-  #   actual = resource.as_jsonapi
-  #   expected = {
-  #     type: 'users',
-  #     id: '1',
-  #     relationships: {
-  #       posts: {
-  #         links: {
-  #           self: 'http://api.example.com/users/1/relationships/posts',
-  #           related: 'http://api.example.com/users/1/posts'
-  #         },
-  #         meta: {
-  #           rel_meta: 'some meta'
-  #         }
-  #       }
-  #     }
-  #   }
+  it 'is rendered properly' do
+    user_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'users'
 
-  #   expect(actual).to eq(expected)
-  # end
+      attribute :name
+    end
+    post_klass = Class.new(JSONAPI::Serializable::Model) do
+      type 'posts'
 
-  # it 'includes data when relationship is included' do
-  #   post_klass = Class.new(JSONAPI::Serializable::Resource) do
-  #     type 'posts'
-  #     id { @post.id.to_s }
-  #   end
-  #   user_klass = Class.new(JSONAPI::Serializable::Resource) do
-  #     type 'users'
-  #     id { @user.id.to_s }
-  #     relationship(:posts) do
-  #       link(:self) { "http://api.example.com/users/#{@user.id}/relationships/posts" }
-  #       link(:related) { "http://api.example.com/users/#{@user.id}/posts" }
-  #       meta(rel_meta: 'some meta')
-  #       data do
-  #         @user.posts.map do |p|
-  #           post_klass.new(post: p, UrlHelper: @url_helper)
-  #         end
-  #       end
-  #     end
-  #   end
-  #   resource = user_klass.new(user: @users[0], url_helper: UrlHelper)
-  #   actual = resource.as_jsonapi(include: [:posts])
-  #   expected = {
-  #     type: 'users',
-  #     id: '1',
-  #     relationships: {
-  #       posts: {
-  #         links: {
-  #           self: 'http://api.example.com/users/1/relationships/posts',
-  #           related: 'http://api.example.com/users/1/posts'
-  #         },
-  #         meta: {
-  #           rel_meta: 'some meta'
-  #         },
-  #         data: [
-  #           { id: '2', type: 'posts' }
-  #         ]
-  #       }
-  #     }
-  #   }
+      has_one :author, user_klass
+    end
 
-  #   expect(actual).to eq(expected)
-  # end
+    resources = @posts.map { |p| post_klass.new(model: p) }
 
-  # it 'filters out relationships' do
-  #   user_klass = Class.new(JSONAPI::Serializable::Resource) do
-  #     type 'users'
-  #     id { @user.id.to_s }
-  #     attribute(:name) { @user.name }
-  #     attribute(:address) { @user.address }
-  #     relationship(:posts) do
-  #       link(:self) { "http://api.example.com/users/#{@user.id}/relationships/posts" }
-  #       link(:related) { "http://api.example.com/users/#{@user.id}/posts" }
-  #       meta(rel_meta: 'some meta')
-  #     end
-  #   end
-  #   resource = user_klass.new(user: @users[0], url_helper: UrlHelper)
-  #   actual = resource.as_jsonapi(fields: [:name, :address])
-  #   expected = {
-  #     type: 'users',
-  #     id: '1',
-  #     attributes: {
-  #       name: 'User 1',
-  #       address: '123 Example st.'
-  #     }
-  #   }
+    actual = JSONAPI.render(resources, include: 'author')
+    expected = {
+      data: [
+        {
+          id: '1',
+          type: 'posts',
+          relationships: {
+            author: {
+              data: { id: '2', type: 'users' }
+            }
+          }
+        },
+        {
+          id: '2',
+          type: 'posts',
+          relationships: {
+            author: {
+              data: { id: '1', type: 'users' }
+            }
+          }
+        },
+        {
+          id: '3',
+          type: 'posts',
+          relationships: {
+            author: {
+              data: { id: '2', type: 'users' }
+            }
+          }
+        },
+        {
+          id: '4',
+          type: 'posts',
+          relationships: {
+            author: {
+              data: nil
+            }
+          }
+        }
+      ],
+      included: [
+        {
+          id: '1',
+          type: 'users',
+          attributes: {
+            name: 'User 1'
+          }
+        },
+        {
+          id: '2',
+          type: 'users',
+          attributes: {
+            name: 'User 2'
+          }
+        }
+      ]
+    }
 
-  #   expect(actual).to eq(expected)
-  # end
-
-  # it 'filters out attributes' do
-  #   user_klass = Class.new(JSONAPI::Serializable::Resource) do
-  #     type 'users'
-  #     id { @user.id.to_s }
-  #     attribute(:name) { @user.name }
-  #     attribute(:address) { @user.address }
-  #     relationship(:posts) do
-  #       link(:self) { "http://api.example.com/users/#{@user.id}/relationships/posts" }
-  #       link(:related) { "http://api.example.com/users/#{@user.id}/posts" }
-  #       meta(rel_meta: 'some meta')
-  #     end
-  #   end
-  #   resource = user_klass.new(user: @users[0], url_helper: UrlHelper)
-  #   actual = resource.as_jsonapi(fields: [:name, :posts])
-  #   expected = {
-  #     type: 'users',
-  #     id: '1',
-  #     attributes: {
-  #       name: 'User 1'
-  #     },
-  #     relationships: {
-  #       posts: {
-  #         links: {
-  #           self: 'http://api.example.com/users/1/relationships/posts',
-  #           related: 'http://api.example.com/users/1/posts'
-  #         },
-  #         meta: {
-  #           rel_meta: 'some meta'
-  #         }
-  #       }
-  #     }
-  #   }
-
-  #   expect(actual).to eq(expected)
-  # end
+    expect(actual).to eq(expected)
+  end
 end
