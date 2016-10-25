@@ -29,45 +29,32 @@ module JSONAPI
       end
 
       def initialize(param_hash = {})
+        @_param_hash = param_hash
         param_hash.each { |k, v| instance_variable_set("@#{k}", v) }
-        @_id = instance_eval(&self.class.id_block)
-        @_type = self.class.type_val || instance_eval(&self.class.type_block)
-        @_meta = if self.class.meta_val
-                   self.class.meta_val
-                 elsif self.class.meta_block
-                   instance_eval(&self.class.meta_block)
-                 end
-        @_attributes = {}
-        @_relationships = self.class.relationship_blocks
-                              .each_with_object({}) do |(k, v), h|
-          h[k] = Relationship.new(param_hash, &v)
-        end
-        @_links = self.class.link_blocks.each_with_object({}) do |(k, v), h|
-          h[k] = Link.as_jsonapi(param_hash, &v)
-        end
       end
 
       def as_jsonapi(params = {})
         hash = {}
-        hash[:id] = @_id
-        hash[:type] = @_type
-        attr = attributes(params[:fields] || self.class.attribute_blocks.keys)
+        hash[:id] = jsonapi_id
+        hash[:type] = jsonapi_type
+        requested_attrs = params[:fields] || self.class.attribute_blocks.keys
+        attr = attributes(requested_attrs)
         hash[:attributes] = attr if attr.any?
-        rels = relationships(params[:fields] || @_relationships.keys,
-                             params[:include] || [])
+        requested_rels = params[:fields] || self.class.relationship_blocks.keys
+        rels = relationships(requested_rels, params[:include] || [])
         hash[:relationships] = rels if rels.any?
-        hash[:links] = @_links if @_links.any?
-        hash[:meta] = @_meta unless @_meta.nil?
+        hash[:links] = links if links.any?
+        hash[:meta] = meta unless meta.nil?
 
         hash
       end
 
       def jsonapi_type
-        @_type
+        @_type ||= self.class.type_val || instance_eval(&self.class.type_block)
       end
 
       def jsonapi_id
-        @_id
+        @_id ||= instance_eval(&self.class.id_block)
       end
 
       def jsonapi_related(include)
@@ -79,6 +66,7 @@ module JSONAPI
       private
 
       def attributes(fields)
+        @_attributes ||= {}
         self.class.attribute_blocks
             .select { |k, _| !@_attributes.key?(k) && fields.include?(k) }
             .each { |k, v| @_attributes[k] = instance_eval(&v) }
@@ -86,10 +74,29 @@ module JSONAPI
       end
 
       def relationships(fields, include)
+        @_relationships ||= self.class.relationship_blocks
+                                .each_with_object({}) do |(k, v), h|
+          h[k] = Relationship.new(@_param_hash, &v)
+        end
         @_relationships
           .select { |k, _| fields.include?(k) }
           .each_with_object({}) do |(k, v), h|
           h[k] = v.as_jsonapi(include.include?(k))
+        end
+      end
+
+      def meta
+        @_meta ||=
+          if self.class.meta_val
+            self.class.meta_val
+          elsif self.class.meta_block
+            instance_eval(&self.class.meta_block)
+          end
+      end
+
+      def links
+        @_links ||= self.class.link_blocks.each_with_object({}) do |(k, v), h|
+          h[k] = Link.as_jsonapi(@_param_hash, &v)
         end
       end
     end
