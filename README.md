@@ -1,3 +1,6 @@
+# MOVED
+## Development now takes place in [jsonapi-rb/serializable](https://github.com/jsonapi-rb/serializable).
+
 # jsonapi-serializable
 Ruby gem for building [JSON API](http://jsonapi.org) resources to be rendered by
 the [jsonapi-renderer](https://github.com/beauby/jsonapi) gem.
